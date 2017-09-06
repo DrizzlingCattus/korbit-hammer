@@ -2,6 +2,7 @@ const https = require("https");
 const fs = require("fs");
 
 const { balloon } = require("./compress.js");
+const { reloadTime } = require("./time_manager.js");
 
 const storagePath = "/home/hentleman/workspace/web/korbit-automate/data/";
 const requestOption = {
@@ -21,11 +22,16 @@ const pushRequest = () => {
 	// ClientRequest is instance of writable stream.
 	const request = https.request(requestOption, (response) => {
 		response.on("data", (stockData) => {
-			balloon(stockData)
+			const time = reloadTime();
+			const formattedData = time.getCurrent() + stockData;
+			const path = "./data/" + time.getDate();
+			balloon(formattedData).deflate().then((result) => {
+				result.appendLF().toAppendFile(path);
+			});
 		});
 		
 		response.on("error", (err) => {
-			
+			// TODO:: Attach logger
 		});
 	});
 	
@@ -37,15 +43,18 @@ const pushRequest = () => {
 	});
 	
 	request.on("error", (err) => {
-		
+		// TODO:: Attach logger
 	});
 	
 	return request;
 };
 
 setInterval(() => {
-	pushRequest()
+	pushRequest();
 }, 1000);
 
-// if agent is keepAlive, then sockets may hang open for quite a long time before the server terminates them.
-keepAliveAgent.destory();
+process.on("exit", (code) => {
+	// if agent is keepAlive, then sockets may hang open for quite a long time before the server terminates them.
+	keepAliveAgent.destory();
+	console.log("exit code is " + code);
+});

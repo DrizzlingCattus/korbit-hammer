@@ -4,7 +4,7 @@ const { Readable, PassThrough } = require("stream");
 
 const Promise = require("bluebird");
 
-const CALLER_PWD = process.env.OLDPWD + "/" || process.cwd() + "/";
+const CALLER_PWD = process.cwd() + "/";
 
 const isFileName = (str) => {
 	// accept only word or .
@@ -12,31 +12,34 @@ const isFileName = (str) => {
 };
 
 const outputApiWrapper = (buffer, innerOption = {}) => {
+	const getData = (option) => {
+		const encoding = option.encoding || innerOption.encoding;
+		const appendString = innerOption.appendString || "";
+		return buffer.toString(encoding) + appendString;
+	};
+	
 	const outputApi = {};
 	
 	outputApi.toString = (encoding) => {
-		return buffer.toString(encoding || innerOption.encoding);
+		return getData({encoding: encoding});
 	};
 	
 	outputApi.toAppendFile = (path, option = {}, callback) => {
-		const data = buffer.toString(option.encoding);
-		let currentPath = path || "";
-		
-		currentPath = isFileName(path)? CALLER_PWD + path : path;
+		const data = getData(option);
+		const currentPath = path || "";
 		
 		fs.appendFile(currentPath, data, (err) => {
 			if(err) {
 				throw err;
 			}else {
-				callback(data);
+				callback && callback(data);
 			}
 		});
 	};
 	
 	outputApi.toFile = (path, option = {}, callback) => {
-		const data = buffer.toString(option.encoding);
-		let currentPath = path || "";
-		currentPath = isFileName(path)? CALLER_PWD + path : path;
+		const data = getData(option);
+		const currentPath = path || "";
 		// Note that it is unsafe to use fs.writeFile multiple times on the same file without waiting for the callback. 
 		// For this scenario, fs.createWriteStream is strongly recommended.
 		// fs.writeFile(path, this.toString(option.encoding), callback);
@@ -51,9 +54,20 @@ const outputApiWrapper = (buffer, innerOption = {}) => {
 		pass.pipe(out);
 
 		out.on("finish", () => {
-			callback(data);
+			callback && callback(data);
 		});
-
+	};
+	
+	outputApi.appendLF = () => {
+		const LF = "\n";
+		const changedOption = {...innerOption};
+		// protect undefined + "\n"
+		if(changedOption.appendString) {
+			changedOption.appendString += LF;
+		}else {
+			changedOption.appendString = LF;
+		}
+		return outputApiWrapper(buffer, changedOption);
 	};
 	
 	return outputApi;

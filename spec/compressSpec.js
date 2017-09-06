@@ -84,4 +84,11 @@ describe("compress.js", function() {
 			});
 		});
 	});
+	
+	it("should be able to add special char in outputApi", function(done) {
+		compressBeforeEach(plainData).then(function(result) {
+			expect(result.appendLF().toString().slice(-1)).toBe("\n");
+ 			done();
+		});
+	});
 });
