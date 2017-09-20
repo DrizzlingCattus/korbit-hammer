@@ -30,12 +30,8 @@ const outputApiWrapper = (buffer, innerOption = {}) => {
 		const data = getData(option);
 		const currentPath = path || "";
 		
-		fs.appendFile(currentPath, data, (err) => {
-			if(err) {
-				throw err;
-			}else {
-				callback && callback(data);
-			}
+		io(currentPath).appendFile(data).then((result) => {
+			callback && callback(result);
 		});
 	};
 	
