@@ -1,10 +1,8 @@
 const https = require("https");
-const fs = require("fs");
 
 const { balloon } = require("./compress.js");
 const { reloadTime } = require("./time_manager.js");
 
-const storagePath = "/home/hentleman/workspace/web/korbit-automate/data/";
 const requestOption = {
 	hostname: "api.korbit.co.kr",
 	port: 443,
