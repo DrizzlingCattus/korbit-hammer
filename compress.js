@@ -4,6 +4,8 @@ const { Readable, PassThrough } = require("stream");
 
 const Promise = require("bluebird");
 
+const { io } = require("./io.js");
+
 const CALLER_PWD = process.cwd() + "/";
 
 const isFileName = (str) => {
@@ -40,20 +42,8 @@ const outputApiWrapper = (buffer, innerOption = {}) => {
 	outputApi.toFile = (path, option = {}, callback) => {
 		const data = getData(option);
 		const currentPath = path || "";
-		// Note that it is unsafe to use fs.writeFile multiple times on the same file without waiting for the callback. 
-		// For this scenario, fs.createWriteStream is strongly recommended.
-		// fs.writeFile(path, this.toString(option.encoding), callback);
-		const out = fs.createWriteStream(currentPath);
-		const pass = new Readable();
-
-		pass.push(data);
-		pass.push(null);
-
-		// By default, stream.end() is called on the destination Writable stream
-		// when the source Readable stream emits 'end', so that the destination is no longer writable. 
-		pass.pipe(out);
-
-		out.on("finish", () => {
+		
+		io(currentPath).writeFile(data).then(() => {
 			callback && callback(data);
 		});
 	};

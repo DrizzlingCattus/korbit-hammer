@@ -30,12 +30,17 @@ const io = (path) => {
 		
 		writeFile: (data) => {
 			return new Promise((resolve, reject) => {
+				// Note that it is unsafe to use fs.writeFile multiple times on the same file without waiting for the callback. 
+				// For this scenario, fs.createWriteStream is strongly recommended.
+				// fs.writeFile(path, this.toString(option.encoding), callback);
 				const out = fs.createWriteStream(path);
 				const pass = new Readable();
 
 				pass.push(data);
 				pass.push(null);
 
+				// By default, stream.end() is called on the destination Writable stream
+				// when the source Readable stream emits 'end', so that the destination is no longer writable.
 				pass.pipe(out);
 
 				out.on("finish", () => {
