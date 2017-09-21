@@ -16,6 +16,7 @@ const keepAliveAgent = new https.Agent({
 });
 requestOption.agent = keepAliveAgent;
 
+let secondPerRequest = 2;
 let dailyData = "";
 let prevTime = reloadTime();
 const pushRequest = () => {
@@ -23,6 +24,16 @@ const pushRequest = () => {
 	// ClientRequest is instance of writable stream.
 	const request = https.request(requestOption, (response) => {
 		response.on("data", (stockData) => {
+			if(response.statusCode === 429) {
+				// Too Many Request
+				// TODO::attach Logger
+				// slowDownRequestRate();
+				return;
+			}else if(response.statusCode === 403) {
+				// Bad Gateway
+				// TODO::attach Logger
+				return;
+			}
 			const time = reloadTime();
 			const formattedData = time.getCurrent() + stockData + "\n";
 			const path = "./data/" + time.getDate();
@@ -61,7 +72,7 @@ const pushRequest = () => {
 
 setInterval(() => {
 	pushRequest();
-}, 1000);
+}, secondPerRequest * 1000);
 
 process.on("exit", (code) => {
 	// if agent is keepAlive, then sockets may hang open for quite a long time before the server terminates them.
