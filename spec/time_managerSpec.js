@@ -28,4 +28,9 @@ describe("time_manager.js", function() {
 			time.getDate();
 		}).not.toThrowError();
 	});
+	
+	it("should be able to judge to pass daybreak", function() {
+		var pastTime = reloadTime({staticDate: new Date(2014, 1, 1)});
+		expect(time.isDayPass(pastTime)).toBeTruthy();
+	});
 });

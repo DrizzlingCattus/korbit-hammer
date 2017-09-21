@@ -2,6 +2,7 @@ const https = require("https");
 
 const { balloon } = require("./compress.js");
 const { reloadTime } = require("./time_manager.js");
+const { io } = require("./io.js");
 
 const requestOption = {
 	hostname: "api.korbit.co.kr",
@@ -15,17 +16,28 @@ const keepAliveAgent = new https.Agent({
 });
 requestOption.agent = keepAliveAgent;
 
+let dailyData = "";
+let prevTime = reloadTime();
 const pushRequest = () => {
 	// request is instance of http.ClientRequest class. 
 	// ClientRequest is instance of writable stream.
 	const request = https.request(requestOption, (response) => {
 		response.on("data", (stockData) => {
 			const time = reloadTime();
-			const formattedData = time.getCurrent() + stockData;
+			const formattedData = time.getCurrent() + stockData + "\n";
 			const path = "./data/" + time.getDate();
-			balloon(formattedData).deflate().then((result) => {
-				result.appendLF().toAppendFile(path);
-			});
+			
+			// if next day, then compress daily stacked data.
+			if(time.isDayPass(prevTime)) {
+				balloon(dailyData).deflate().then((result) => {
+					result.toFile(path + "_compressed");
+				});
+			}
+			prevTime = time;
+			
+			dailyData += formattedData;
+			// for backup
+			io(path).appendFile(formattedData);
 		});
 		
 		response.on("error", (err) => {
