@@ -46,6 +46,7 @@ const pushRequest = () => {
 			}
 			prevTime = time;
 			
+			// in memory method... not good..
 			dailyData += formattedData;
 			// for backup
 			io(path).appendFile(formattedData);
@@ -60,7 +61,7 @@ const pushRequest = () => {
 	// If any parts of body are unsent, it flush them.
 	// In request.end(callback), callback will be called when request stream is finished.
 	request.end(() => {
-		console.log("finish request end");
+		//console.log("finish request end");
 	});
 	
 	request.on("error", (err) => {
@@ -75,7 +76,8 @@ setInterval(() => {
 }, secondPerRequest * 1000);
 
 process.on("exit", (code) => {
-	// if agent is keepAlive, then sockets may hang open for quite a long time before the server terminates them.
+	// if agent is keepAlive, then sockets may hang open for quite a long time 
+	// before the server terminates them.
 	keepAliveAgent.destory();
 	console.log("exit code is " + code);
 });

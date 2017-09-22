@@ -1,5 +1,5 @@
 const fs = require("fs");
-const { Readable, Writable } = require("stream");
+const { Readable } = require("stream");
 
 const Promise = require("bluebird");
 

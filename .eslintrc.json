@@ -6,7 +6,9 @@
     },
     "extends": "eslint:recommended",
     "parserOptions": {
-        "sourceType": "module"
+        "sourceType": "module",
+        // need to use new es6 syntax
+        "ecmaVersion": 6
     },
     "rules": {
         "indent": [
