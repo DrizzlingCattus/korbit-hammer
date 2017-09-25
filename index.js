@@ -41,7 +41,7 @@ const pushRequest = () => {
 			// if next day, then compress daily stacked data.
 			if(time.isDayPass(prevTime)) {
 				balloon(dailyData).deflate().then((result) => {
-					result.toFile(path + "_compressed");
+					result.toFile("./data" + prevTime.getDate() + "_compressed");
 				});
 			}
 			prevTime = time;
