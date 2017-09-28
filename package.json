@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node ./index.js",
+    "start": "./run_all_in_one.sh",
     "test": "jasmine"
   },
   "author": "stenrine",

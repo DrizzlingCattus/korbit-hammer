@@ -1,14 +1,27 @@
 const https = require("https");
 
+
 const { balloon } = require("./compress.js");
 const { reloadTime } = require("./time_manager.js");
 const { io } = require("./io.js");
+
+
+const SUPPORTED_COINS = ["btc_krw", "etc_krw", "eth_krw", "xrp_krw"];
+const TARGET_COIN = ((name_str) => {
+	if(SUPPORTED_COINS.includes(name_str)) {
+		return name_str;
+	}
+	// if wrong input, then return default value
+	return btc_krw;
+})(process.argv[2]);
+const DATA_STORAGE_DIR = "./data/" + TARGET_COIN;
+
 
 const requestOption = {
 	hostname: "api.korbit.co.kr",
 	port: 443,
 	/* need to support other kind of coins */
-	path: "/v1/ticker/detailed?currency_pair=btc_krw",
+	path: "/v1/ticker/detailed?currency_pair=" + TARGET_COIN,
 	method: "GET"
 };
 const keepAliveAgent = new https.Agent({
@@ -35,13 +48,14 @@ const pushRequest = () => {
 				return;
 			}
 			const time = reloadTime();
-			const formattedData = time.getCurrent() + stockData + "\n";
-			const path = "./data/" + time.getDate();
+			const formattedData = time.getCurrent() + " " + stockData + "\n";
+			const rawDataPath = DATA_STORAGE_DIR + "/" + time.getDate();
 			
 			// if next day, then compress daily stacked data.
 			if(time.isDayPass(prevTime)) {
 				balloon(dailyData).deflate().then((result) => {
-					result.toFile("./data" + prevTime.getDate() + "_compressed");
+					const compressedDataPath = DATA_STORAGE_DIR + "/" + prevTime.getDate() + "_compressed";
+					result.toFile(compressedDataPath);
 				});
 			}
 			prevTime = time;
@@ -49,7 +63,7 @@ const pushRequest = () => {
 			// in memory method... not good..
 			dailyData += formattedData;
 			// for backup
-			io(path).appendFile(formattedData);
+			io(rawDataPath).appendFile(formattedData);
 		});
 		
 		response.on("error", (err) => {

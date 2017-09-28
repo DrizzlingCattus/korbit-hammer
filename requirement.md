@@ -72,3 +72,5 @@ ouputApi.appendLF().toFile();`
 http 429 Too Many Request
 
 9. status code 403 bad gateway에 대해서 적법한로그와 stacktrace를 출력한다.
+
+10. `여러 종류의 가상화폐의 정보를 요청할 수 있다.`
