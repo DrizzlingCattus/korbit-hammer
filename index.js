@@ -1,10 +1,9 @@
 const https = require("https");
 
-
 const { balloon } = require("./compress.js");
 const { reloadTime } = require("./time_manager.js");
 const { io } = require("./io.js");
-
+const { makePulseController } = require("./pulse_controller.js");
 
 const SUPPORTED_COINS = ["btc_krw", "etc_krw", "eth_krw", "xrp_krw"];
 const TARGET_COIN = ((name_str) => {
@@ -15,7 +14,6 @@ const TARGET_COIN = ((name_str) => {
 	return btc_krw;
 })(process.argv[2]);
 const DATA_STORAGE_DIR = "./data/" + TARGET_COIN;
-
 
 const requestOption = {
 	hostname: "api.korbit.co.kr",
@@ -29,7 +27,7 @@ const keepAliveAgent = new https.Agent({
 });
 requestOption.agent = keepAliveAgent;
 
-let secondPerRequest = 2;
+const requestPulseController = makePulseController();
 let dailyData = "";
 let prevTime = reloadTime();
 const pushRequest = () => {
@@ -53,8 +51,8 @@ const pushRequest = () => {
 			
 			// if next day, then compress daily stacked data.
 			if(time.isDayPass(prevTime)) {
+				const compressedDataPath = DATA_STORAGE_DIR + "/" + prevTime.getDate() + "_compressed";
 				balloon(dailyData).deflate().then((result) => {
-					const compressedDataPath = DATA_STORAGE_DIR + "/" + prevTime.getDate() + "_compressed";
 					result.toFile(compressedDataPath);
 				});
 			}
