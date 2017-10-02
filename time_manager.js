@@ -2,15 +2,15 @@ const reloadTime = function(option = {}) {
 	const current = option.staticDate || new Date();
 	const timeZone = option.timeZone || "Asia/Seoul";
 	const outputApi = {};
-
-	// return like 2017-09-05
-	outputApi.getDate = () => {
-		return current.toJSON().slice(0, 10);
-	};
 	
-	// return like 9/6/2017, 9:39:35 AM
+	// return like 2017-10-3, 08:39:35
 	outputApi.getCurrent = () => {
 		return current.toLocaleString("ko-KR", {timeZone: timeZone});
+	};
+	
+	// return like 2017-09-05
+	outputApi.getDate = () => {
+		return outputApi.getCurrent().slice(0, 10).trim();
 	};
 	
 	outputApi.isDayPass = (prevTime) => {
