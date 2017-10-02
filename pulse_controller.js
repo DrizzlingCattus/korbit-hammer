@@ -1,6 +1,7 @@
-const makePulseController = () => {
+
+const makePulseController = (countOfPulse) => {
 	// SUPPORTED_COINS.length === kind of coins count
-	const PULSE_INTERVAL_MAX = 2 * (SUPPORTED_COINS.length + 1) * 1000;
+	const PULSE_INTERVAL_MAX = 2 * (countOfPulse + 1) * 1000;
 	const PULSE_INTERVAL_MIN = 1 * 1000;
 	const INTERVAL_CACHE_LIMIT = 50;
 	const WELL_WORKING_CRITERIA = 30;
@@ -8,7 +9,7 @@ const makePulseController = () => {
 	const TOO_MANY_REQUEST = 429;
 	const OK = 200;
 	
-	let interval = SUPPORTED_COINS.length * 1000;
+	let interval = countOfPulse * 1000;
 	const intervalCache = [interval];
 	
 	const updateCache = (value) => {
