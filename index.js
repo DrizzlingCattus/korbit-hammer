@@ -27,13 +27,14 @@ const keepAliveAgent = new https.Agent({
 });
 requestOption.agent = keepAliveAgent;
 
-const requestPulseController = makePulseController();
+const requestPulseController = makePulseController(SUPPORTED_COINS.length);
 let dailyData = "";
 let prevTime = reloadTime();
 const pushRequest = () => {
 	// request is instance of http.ClientRequest class. 
 	// ClientRequest is instance of writable stream.
 	const request = https.request(requestOption, (response) => {
+		requestPulseController.update(response.statusCode);
 		response.on("data", (stockData) => {
 			if(response.statusCode === 429) {
 				// Too Many Request
@@ -51,6 +52,15 @@ const pushRequest = () => {
 			
 			// if next day, then compress daily stacked data.
 			if(time.isDayPass(prevTime)) {
+				// FOR DEBUG
+				try {
+					if(time.getDate() === prevTime.getDate()) {
+						new Error("time ::" + time.getDate() + "prevTime ::" + prevTime.getDate());
+					}
+				}catch (e) {
+					console.log(e);
+				}
+				
 				const compressedDataPath = DATA_STORAGE_DIR + "/" + prevTime.getDate() + "_compressed";
 				balloon(dailyData).deflate().then((result) => {
 					result.toFile(compressedDataPath);
@@ -85,7 +95,7 @@ const pushRequest = () => {
 
 setInterval(() => {
 	pushRequest();
-}, secondPerRequest * 1000);
+}, requestPulseController.getInterval());
 
 process.on("exit", (code) => {
 	// if agent is keepAlive, then sockets may hang open for quite a long time 

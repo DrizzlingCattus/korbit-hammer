@@ -1,0 +1,1 @@
+kill $(ps -ef | grep krw | awk '{print $2}')
