@@ -2,7 +2,7 @@ var fs = require("fs");
 
 var Promise = require("bluebird");
 
-var { balloon } = require("../compress.js");
+var { balloon } = require("../src/compress.js");
 
 
 function compressBeforeEach(data) {

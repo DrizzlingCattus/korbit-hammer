@@ -1,12 +1,9 @@
-echo "btc_krw process starting..."
-node ./index btc_krw > ./log/btc_krw.log &
+main_path="./src/index"
+kind_of_coins=("btc_krw" "eth_krw" "etc_krw" "xrp_krw")
 
-echo "eth_krw process starting..."
-node ./index eth_krw > ./log/eth_krw.log &
-
-echo "etc_krw process starting..."
-node ./index etc_krw > ./log/etc_krw.log &
-
-echo "xrp_krw process starting..."
-node ./index xrp_krw > ./log/xrp_krw.log &
+for coin in ${kind_of_coins[@]}
+{
+    echo "$coin process starting..."
+    node $main_path $coin > "./log/$coin.log" &
+}
 

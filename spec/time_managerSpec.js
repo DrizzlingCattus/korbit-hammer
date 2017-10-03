@@ -1,4 +1,4 @@
-var { reloadTime } = require("../time_manager.js");
+var { reloadTime } = require("../src/time_manager.js");
 
 describe("time_manager.js", function() {
 	var time;

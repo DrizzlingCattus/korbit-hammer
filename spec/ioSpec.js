@@ -1,6 +1,6 @@
 var fs = require("fs");
 
-var { io } = require("../io.js");
+var { io } = require("../src/io.js");
 
 
 describe("io.js", function() {
