@@ -26,7 +26,7 @@ const makePulseController = (countOfPulse) => {
 		},
 		update: (state) => {
 			if(TOO_MANY_REQUEST === state) {
-				interval += 10;
+				interval += 100;
 			}
 			return interval;
 		}
