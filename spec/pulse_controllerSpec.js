@@ -14,18 +14,17 @@ describe("pulse_controller.js", function() {
 	});
 	
 	it("should be able to increase interval", function() {
-		var first = controller.getInterval();
-		
-		controller.update(429);
-		
-		var second = controller.getInterval();
-		
+		var first = controller.getInterval(),
+			second = controller.update(429);
 		expect(first < second).toBeTruthy();
 		
-		controller.update(429);
+		// repeat state cannot affect to interval
+		var third = controller.update(429);
+		expect(second === third).toBeTruthy();
 		
-		var third = controller.getInterval();
-		
-		expect(second < third).toBeTruthy();
+		// state change can affect to interval
+		controller.update(200);
+		var fourth = controller.update(429);
+		expect(third < fourth).toBeTruthy();
 	});
 });

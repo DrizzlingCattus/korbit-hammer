@@ -10,24 +10,18 @@ const makePulseController = (countOfPulse) => {
 	const OK = 200;
 	
 	let interval = countOfPulse * 1000;
-	const intervalCache = [interval];
-	
-	const updateCache = (value) => {
-		// throw away oldest value
-		if(intervalCache.length === INTERVAL_CACHE_LIMIT) {
-			intervalCache.shift();
-		}
-		intervalCache.push(value);
-	};
+	let prevState = null;
 	
 	return {
 		getInterval: () => {
 			return interval;
 		},
 		update: (state) => {
-			if(TOO_MANY_REQUEST === state) {
+			if(TOO_MANY_REQUEST !== prevState &&
+			   TOO_MANY_REQUEST === state) {
 				interval += 100;
 			}
+			prevState = state;
 			return interval;
 		}
 	};
