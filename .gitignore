@@ -4,4 +4,3 @@ node_modules/
 research/
 *.log
 tmux*
-temp.js
