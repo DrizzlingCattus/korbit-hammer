@@ -1,4 +1,5 @@
 const https = require("https");
+const path = require("path");
 
 const winston = require("winston");
 const { combine, timestamp, label, printf } = winston.format;
@@ -8,10 +9,11 @@ const { reloadTime } = require("./time_manager.js");
 const { io } = require("./io.js");
 const { makePulseController } = require("./pulse_controller.js");
 
-const DATA_STORAGE_ROOT_PATH = "../data/";
-const LOG_STORAGE_ROOT_PATH = "../log/";
-const DEBUG_LOG_STORAGE_PATH = "../log/debug/";
-const INFO_LOG_STORAGE_PATH = "../log/info/";
+const PWD_PATH = path.resolve(__dirname) + "/";
+const DATA_STORAGE_ROOT_PATH = `${PWD_PATH}../data/`;
+const LOG_STORAGE_ROOT_PATH = `${PWD_PATH}../log/`;
+const DEBUG_LOG_STORAGE_PATH = `${PWD_PATH}../log/debug/`;
+const INFO_LOG_STORAGE_PATH = `${PWD_PATH}../log/info/`;
 
 const SUPPORTED_COINS = ["btc_krw", "etc_krw", "eth_krw", "xrp_krw"];
 const TARGET_COIN = ((name_str) => {
@@ -36,7 +38,7 @@ const httpLogger = winston.createLogger({
 	),
 	transports: [
 		new (winston.transports.File)({
-			filename: DEBUG_LOG_STORAGE_PATH + `debug/http_${TARGET_COIN}.log`
+			filename: DEBUG_LOG_STORAGE_PATH + `http_${TARGET_COIN}.log`
 		})
 	]
 });

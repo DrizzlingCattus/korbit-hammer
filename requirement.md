@@ -51,7 +51,8 @@ outputApi.toFile(path, [option], callback)
 7.` outputApi에 특정한 문자를 붙여서 다시 outputApi를 호출할 수 있다.
 ouputApi.appendLF().toFile();`
 
-## 데이터 전송
+## 모니터링
+1. 각 프로세스가 뱉는 stdin stdout 로그를 한번에 볼 수 있게하는 쉘스크립트
 
 
 ## 메인 로직(index.js)
@@ -81,4 +82,4 @@ http 429 Too Many Request
 2017-10-01 09:00:01 ~ 2017-10-02 08:59:59에 해당하는 데이터가 2017-10-01에 저장됨. 이는 의도한 바가 아님.
 2017-10-01 00:00:01 ~ 2017-10-01 23:59:59가 의도한 바에 맞음.`
 
-12. BUG:: 429 status에 대해서 pulse controller가 interval을 제대로 늘리지 않는다.
+12. `BUG:: 429 status에 대해서 pulse controller가 interval을 제대로 늘리지 않는다.`
