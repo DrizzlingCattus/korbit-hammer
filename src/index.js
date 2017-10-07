@@ -16,13 +16,7 @@ const DEBUG_LOG_STORAGE_PATH = `${PWD_PATH}../log/debug/`;
 const INFO_LOG_STORAGE_PATH = `${PWD_PATH}../log/info/`;
 
 const SUPPORTED_COINS = ["btc_krw", "etc_krw", "eth_krw", "xrp_krw"];
-const TARGET_COIN = ((name_str) => {
-	if(SUPPORTED_COINS.includes(name_str)) {
-		return name_str;
-	}
-	// if wrong input, then return default value
-	return btc_krw;
-})(process.argv[2]);
+const TARGET_COIN = SUPPORTED_COINS.includes(process.argv[2])? process.argv[2] : SUPPORTED_COINS[0];
 const DATA_STORAGE_PATH = DATA_STORAGE_ROOT_PATH + TARGET_COIN;
 
 /* start:: initialize winston logger */
@@ -61,20 +55,34 @@ requestOption.agent = keepAliveAgent;
 // initialize interval pulse controller
 const requestPulseController = makePulseController(SUPPORTED_COINS.length);
 
+// need to refactoring... with pulse controller and pushRequest
+let intervalId = null; 
+const updateTimer = () => {
+	if(intervalId !== null) {
+		clearInterval(intervalId);
+	}
+	intervalId = setInterval(() => {
+		pushRequest();
+	}, requestPulseController.getInterval());
+};
+
 let dailyData = "";
 let prevTime = reloadTime();
+let prevState = null;
 const pushRequest = () => {
 	// request is instance of http.ClientRequest class. 
 	// ClientRequest is instance of writable stream.
 	const request = https.request(requestOption, (response) => {
-		requestPulseController.update(response.statusCode);
 		httpLogger.debug(`status code is ${response.statusCode} with ${requestPulseController.getInterval()}ms`);
+		requestPulseController.update(response.statusCode);
 		
 		response.on("data", (stockData) => {
 			if(response.statusCode === 429) {
 				// Too Many Request
 				// TODO::attach Logger
-				// slowDownRequestRate();
+				if(prevState !== 429) {
+					updateTimer();
+				}
 				return;
 			}else if(response.statusCode === 403) {
 				// Bad Gateway
@@ -102,6 +110,7 @@ const pushRequest = () => {
 				});
 			}
 			prevTime = time;
+			prevState = response.statusCode;
 			
 			// in memory method... not good..
 			dailyData += formattedData;
@@ -128,9 +137,7 @@ const pushRequest = () => {
 	return request;
 };
 
-setInterval(() => {
-	pushRequest();
-}, requestPulseController.getInterval());
+updateTimer();
 
 process.on("exit", (code) => {
 	// if agent is keepAlive, then sockets may hang open for quite a long time 

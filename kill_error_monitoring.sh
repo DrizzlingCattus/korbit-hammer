@@ -1,0 +1,1 @@
+kill $(ps -ef | grep tail | awk '{print $2}')

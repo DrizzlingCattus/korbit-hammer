@@ -52,7 +52,7 @@ outputApi.toFile(path, [option], callback)
 ouputApi.appendLF().toFile();`
 
 ## 모니터링
-1. 각 프로세스가 뱉는 stdin stdout 로그를 한번에 볼 수 있게하는 쉘스크립트
+1. `각 프로세스가 뱉는 stdin stdout 로그를 한번에 볼 수 있게하는 쉘스크립트`
 
 
 ## 메인 로직(index.js)
