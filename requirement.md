@@ -54,6 +54,8 @@ ouputApi.appendLF().toFile();`
 ## 모니터링
 1. `각 프로세스가 뱉는 stdin stdout 로그를 한번에 볼 수 있게하는 쉘스크립트`
 
+## API 이름 규칙
+1. async한 녀석들은 알아보기쉽게 sync랑 구분지어서 이름 지어야하지 않을까?
 
 ## 메인 로직(index.js)
 1. response에 대해서 일어나는 오류를 적법하게 처리할 수 있다.
@@ -83,3 +85,5 @@ http 429 Too Many Request
 2017-10-01 00:00:01 ~ 2017-10-01 23:59:59가 의도한 바에 맞음.`
 
 12. `BUG:: 429 status에 대해서 pulse controller가 interval을 제대로 늘리지 않는다.`
+
+13. 동작을 통해서 검증되어야하는 기능들은 간단한 test spec용 서버를 구축해서 test되어야함.
