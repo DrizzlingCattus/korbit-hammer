@@ -1,4 +1,5 @@
 const https = require("https");
+const http = require("http");
 const path = require("path");
 
 const winston = require("winston");
@@ -8,12 +9,15 @@ const { balloon } = require("./compress.js");
 const { reloadTime } = require("./time_manager.js");
 const { io } = require("./io.js");
 const { makePulseController } = require("./pulse_controller.js");
+const { makeFormatWriter } = require("./format_writer.js");
+const { makeRequest } = require("./request.js");
 
 const PWD_PATH = path.resolve(__dirname) + "/";
 const DATA_STORAGE_ROOT_PATH = `${PWD_PATH}../data/`;
 const LOG_STORAGE_ROOT_PATH = `${PWD_PATH}../log/`;
-const DEBUG_LOG_STORAGE_PATH = `${PWD_PATH}../log/debug/`;
-const INFO_LOG_STORAGE_PATH = `${PWD_PATH}../log/info/`;
+const DEBUG_LOG_STORAGE_PATH = `${LOG_STORAGE_ROOT_PATH}debug/`;
+const INFO_LOG_STORAGE_PATH = `${LOG_STORAGE_ROOT_PATH}info/`;
+const ERROR_LOG_STORAGE_PATH = `${LOG_STORAGE_ROOT_PATH}error/`;
 
 const SUPPORTED_COINS = ["btc_krw", "etc_krw", "eth_krw", "xrp_krw"];
 const TARGET_COIN = ((name_str) => {
@@ -26,7 +30,7 @@ const TARGET_COIN = ((name_str) => {
 const DATA_STORAGE_PATH = DATA_STORAGE_ROOT_PATH + TARGET_COIN;
 
 /* start:: initialize winston logger */
-const httpLoggerFormat = printf((info) => {
+const defaultFormat = printf((info) => {
 	return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`;
 });
 const httpLogger = winston.createLogger({
@@ -34,107 +38,118 @@ const httpLogger = winston.createLogger({
 	format: combine(
 		label({label: TARGET_COIN}),
 		timestamp(),
-		httpLoggerFormat
+		defaultFormat
 	),
 	transports: [
 		new (winston.transports.File)({
 			filename: DEBUG_LOG_STORAGE_PATH + `http_${TARGET_COIN}.log`
+		}),
+		new (winston.transports.File)({
+			level: "error",
+			filename: ERROR_LOG_STORAGE_PATH + `http_${TARGET_COIN}.log`
 		})
 	]
 });
 /* end:: initialize winston logger */
 
+const compressToFileAsync = (filename = "noname_compressed", data = "") => {
+	const compressedDataPath = `${DATA_STORAGE_PATH}/${filename}_compressed`;
+	balloon(data).deflate().then((result) => {
+		result.toFile(compressedDataPath);
+	});
+};
+
+// initialize interval pulse controller
+const requestPulseController = makePulseController(SUPPORTED_COINS.length);
+
+const makeTimerUpdater = (updateTime, toDoListCallback) => {
+	let intervalId = null;
+	return () => {
+		if(intervalId !== null) {
+			clearInterval(intervalId);
+		}
+		intervalId = setInterval(() => {
+			toDoListCallback();
+			//stockRequest.send();
+		}, updateTime());
+	};
+}
+
 /* start:: initialize http request module */
 const requestOption = {
+	protocol: "https:",
 	hostname: "api.korbit.co.kr",
 	port: 443,
 	/* need to support other kind of coins */
 	path: "/v1/ticker/detailed?currency_pair=" + TARGET_COIN,
 	method: "GET"
 };
-const keepAliveAgent = new https.Agent({
-	keepAlive: true
+
+const stockWriter = makeFormatWriter(DATA_STORAGE_PATH);
+const stockRequest = makeRequest(requestOption);
+let currTime = null;
+let prevTime = reloadTime();
+let prevState = null;
+// TODO :: need to get agent object for process kill
+// const keepAliveAgent = new https.Agent({
+// 	keepAlive: true
+// });
+// requestOption.agent = keepAliveAgent;
+
+const updateStockRequestInterval = makeTimerUpdater(() => {
+	return requestPulseController.getInterval();
+}, () => {
+	stockRequest.send();
 });
-requestOption.agent = keepAliveAgent;
+
+stockRequest.beforeAll((response) => {
+	// TODO :: refactoring this.. performance inefficiency
+	requestPulseController.update(response.statusCode);
+	
+	currTime = reloadTime();
+});
+
+stockRequest.afterAll((response) => {
+	prevTime = currTime;
+	prevState = response.statusCode;
+});
+
+// 200 - OK
+stockRequest.bind(200, (response, stockData) => {
+	if(currTime.isDayPass(prevTime)) {
+		compressToFileAsync(prevTime.getDate(), stockWriter.popDailyData());
+	}
+	stockWriter.setFormat((data) => {
+		return `${currTime.getCurrent()} ${data}\n`;
+	});
+	stockWriter.writeWithFormatAsync(currTime.getDate(), stockData);
+});
+
+// 429 - TOO MANY REQUEST
+stockRequest.bind(429, (response, chunck) => {
+	// if we detect too many request, then control time interval once
+	// 429 response can be found several times continuously
+	// so protect calling update function several times.
+	if(prevState !== 429) {
+		httpLogger.debug(`status code is ${response.statusCode} with ${requestPulseController.getInterval()}ms`);
+		updateStockRequestInterval();
+	}
+});
+
+// 403 - BAD GATEWAY
+stockRequest.bind(403, (response, chunck) => {
+	if(prevState !== 403) {
+		httpLogger.error(`occur 403 BAD GATEWAY ${chunck}`);
+	}
+});
 /* end:: initialize http request module */
 
-// initialize interval pulse controller
-const requestPulseController = makePulseController(SUPPORTED_COINS.length);
-
-let dailyData = "";
-let prevTime = reloadTime();
-const pushRequest = () => {
-	// request is instance of http.ClientRequest class. 
-	// ClientRequest is instance of writable stream.
-	const request = https.request(requestOption, (response) => {
-		requestPulseController.update(response.statusCode);
-		httpLogger.debug(`status code is ${response.statusCode} with ${requestPulseController.getInterval()}ms`);
-		
-		response.on("data", (stockData) => {
-			if(response.statusCode === 429) {
-				// Too Many Request
-				// TODO::attach Logger
-				// slowDownRequestRate();
-				return;
-			}else if(response.statusCode === 403) {
-				// Bad Gateway
-				// TODO::attach Logger
-				return;
-			}
-			const time = reloadTime();
-			const formattedData = time.getCurrent() + " " + stockData + "\n";
-			const rawDataPath = DATA_STORAGE_PATH + "/" + time.getDate();
-			
-			// if next day, then compress daily stacked data.
-			if(time.isDayPass(prevTime)) {
-				// FOR DEBUG
-				try {
-					if(time.getDate() === prevTime.getDate()) {
-						new Error("time ::" + time.getDate() + "prevTime ::" + prevTime.getDate());
-					}
-				}catch (e) {
-					console.log(e);
-				}
-				
-				const compressedDataPath = DATA_STORAGE_PATH + "/" + prevTime.getDate() + "_compressed";
-				balloon(dailyData).deflate().then((result) => {
-					result.toFile(compressedDataPath);
-				});
-			}
-			prevTime = time;
-			
-			// in memory method... not good..
-			dailyData += formattedData;
-			// for backup
-			io(rawDataPath).appendFile(formattedData);
-		});
-		
-		response.on("error", (err) => {
-			// TODO:: Attach logger
-		});
-	});
-	
-	// Finish sending request.
-	// If any parts of body are unsent, it flush them.
-	// In request.end(callback), callback will be called when request stream is finished.
-	request.end(() => {
-		//console.log("finish request end");
-	});
-	
-	request.on("error", (err) => {
-		// TODO:: Attach logger
-	});
-	
-	return request;
-};
-
-setInterval(() => {
-	pushRequest();
-}, requestPulseController.getInterval());
+// run stock crawler
+updateStockRequestInterval();
 
 process.on("exit", (code) => {
 	// if agent is keepAlive, then sockets may hang open for quite a long time 
 	// before the server terminates them.
-	keepAliveAgent.destory();
+	// keepAliveAgent.destory();
 	console.log("exit code is " + code);
 });
