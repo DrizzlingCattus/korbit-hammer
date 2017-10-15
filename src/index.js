@@ -1,5 +1,3 @@
-const https = require("https");
-const http = require("http");
 const path = require("path");
 
 const winston = require("winston");
@@ -7,7 +5,6 @@ const { combine, timestamp, label, printf } = winston.format;
 
 const { balloon } = require("./compress.js");
 const { reloadTime } = require("./time_manager.js");
-const { io } = require("./io.js");
 const { makePulseController } = require("./pulse_controller.js");
 const { makeFormatWriter } = require("./format_writer.js");
 const { makeRequest } = require("./request.js");
@@ -20,13 +17,7 @@ const INFO_LOG_STORAGE_PATH = `${LOG_STORAGE_ROOT_PATH}info/`;
 const ERROR_LOG_STORAGE_PATH = `${LOG_STORAGE_ROOT_PATH}error/`;
 
 const SUPPORTED_COINS = ["btc_krw", "etc_krw", "eth_krw", "xrp_krw"];
-const TARGET_COIN = ((name_str) => {
-	if(SUPPORTED_COINS.includes(name_str)) {
-		return name_str;
-	}
-	// if wrong input, then return default value
-	return btc_krw;
-})(process.argv[2]);
+const TARGET_COIN = SUPPORTED_COINS.includes(process.argv[2]) ? process.argv[2] : "unknown_coin";
 const DATA_STORAGE_PATH = DATA_STORAGE_ROOT_PATH + TARGET_COIN;
 
 /* start:: initialize winston logger */
@@ -73,7 +64,7 @@ const makeTimerUpdater = (updateTime, toDoListCallback) => {
 			//stockRequest.send();
 		}, updateTime());
 	};
-}
+};
 
 /* start:: initialize http request module */
 const requestOption = {
@@ -126,7 +117,7 @@ stockRequest.bind(200, (response, stockData) => {
 });
 
 // 429 - TOO MANY REQUEST
-stockRequest.bind(429, (response, chunck) => {
+stockRequest.bind(429, (response) => {
 	// if we detect too many request, then control time interval once
 	// 429 response can be found several times continuously
 	// so protect calling update function several times.

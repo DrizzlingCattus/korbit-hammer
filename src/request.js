@@ -12,10 +12,10 @@ function addPerformanceRelatedOption(protocol, option) {
 
 function parseProtocol(inputString) {
 	if(inputString == "http:" ||
-	   inputString === undefined) {
+		inputString === undefined) {
 		return http;
 	}else if(inputString == "https:" ||
-			 inputString == "https") {
+			inputString == "https") {
 		return https;
 	}else {
 		throw new Error(`Error! ${inputString} is not a supported protocol.`);
@@ -70,7 +70,7 @@ const makeRequest = (option) => {
 	return {
 		bind: (statusCode, callback) => {
 			if(typeof callback === "function" &&
-			  typeof statusCode === "number") {
+				typeof statusCode === "number") {
 				statusCallbackHashmap[statusCode] = callback;
 			}
 		},

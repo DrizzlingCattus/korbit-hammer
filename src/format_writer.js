@@ -2,9 +2,8 @@ const { io } = require("./io.js");
 
 const makeFormatWriter = (path = ".") => {
 	let dataStoragePath = path;
-// 	let rawDataPath = `${dataStoragePath}/${time.getDate()}`;
 	
-	let writingFormat = (input = "") => {return input};
+	let writingFormat = (input = "") => {return input;};
 	let dailyData = "";
 	
 	const writer = {};
@@ -16,7 +15,7 @@ const makeFormatWriter = (path = ".") => {
 		}
 		writingFormat = format;
 		return true;
-	}
+	};
 	
 	// TODO:: could choose io.append or write
 	writer.writeWithFormatAsync = (filename, data, formatCb = writingFormat) => {
@@ -32,9 +31,9 @@ const makeFormatWriter = (path = ".") => {
 		const ret = dailyData;
 		dailyData = "";
 		return ret;
-	}
+	};
 
 	return writer;
-}
+};
 
 module.exports = { makeFormatWriter };
