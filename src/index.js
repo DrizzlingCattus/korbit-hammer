@@ -25,7 +25,6 @@ const defaultFormat = printf((info) => {
 	return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`;
 });
 const httpLogger = winston.createLogger({
-	level: "debug",
 	format: combine(
 		label({label: TARGET_COIN}),
 		timestamp(),
@@ -33,6 +32,7 @@ const httpLogger = winston.createLogger({
 	),
 	transports: [
 		new (winston.transports.File)({
+			level: "debug",
 			filename: DEBUG_LOG_STORAGE_PATH + `http_${TARGET_COIN}.log`
 		}),
 		new (winston.transports.File)({
@@ -44,9 +44,8 @@ const httpLogger = winston.createLogger({
 /* end:: initialize winston logger */
 
 const compressToFileAsync = (filename = "noname_compressed", data = "") => {
-	const compressedDataPath = `${DATA_STORAGE_PATH}/${filename}_compressed`;
 	balloon(data).deflate().then((result) => {
-		result.toFile(compressedDataPath);
+		result.toFile(`${DATA_STORAGE_PATH}/${filename}_compressed`);
 	});
 };
 
@@ -72,7 +71,7 @@ const requestOption = {
 	hostname: "api.korbit.co.kr",
 	port: 443,
 	/* need to support other kind of coins */
-	path: "/v1/ticker/detailed?currency_pair=" + TARGET_COIN,
+	path: `/v1/ticker/detailed?currency_pair=${TARGET_COIN}`,
 	method: "GET"
 };
 
@@ -96,7 +95,6 @@ const updateStockRequestInterval = makeTimerUpdater(() => {
 stockRequest.beforeAll((response) => {
 	// TODO :: refactoring this.. performance inefficiency
 	requestPulseController.update(response.statusCode);
-	
 	currTime = reloadTime();
 });
 
@@ -130,13 +128,18 @@ stockRequest.bind(429, (response) => {
 // 403 - BAD GATEWAY
 stockRequest.bind(403, (response, chunck) => {
 	if(prevState !== 403) {
-		httpLogger.error(`occur 403 BAD GATEWAY ${chunck}`);
+		httpLogger.error(`occur 403 BAD GATEWAY - ${response}`);
 	}
 });
 /* end:: initialize http request module */
 
 // run stock crawler
 updateStockRequestInterval();
+
+process.on("uncaughtException", function (err) {
+	console.error("process uncaughtException error occur!");
+	httpLogger.error(err.stack);
+});
 
 process.on("exit", (code) => {
 	// if agent is keepAlive, then sockets may hang open for quite a long time 
