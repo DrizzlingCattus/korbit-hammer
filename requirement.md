@@ -52,7 +52,7 @@ outputApi.toFile(path, [option], callback)
 ouputApi.appendLF().toFile();`
 
 ## 모니터링
-1. 각 프로세스가 뱉는 stdin stdout 로그를 한번에 볼 수 있게하는 쉘스크립트
+1. `각 프로세스가 뱉는 stdin stdout 로그를 한번에 볼 수 있게하는 쉘스크립트`
 
 ## API 이름 규칙
 1. async한 녀석들은 알아보기쉽게 sync랑 구분지어서 이름 지어야하지 않을까?
@@ -71,7 +71,7 @@ ouputApi.appendLF().toFile();`
 
 6. `하루동안 모은 데이터를 한번에 압축시켜 압축 효율을 올린다.`
 
-7. status code가 200일때만(정상적인 금융데이터가 들어올때만) data를 write한다.
+7. `status code가 200일때만(정상적인 금융데이터가 들어올때만) data를 write한다.`
 
 8. `데이터를 요청할때, 너무 많은 요청을 보내면 시간을 조절하여 로그 수집을 원활히 한다.` ~[simple 버전:: pulse\_controller.js]
 http 429 Too Many Request
@@ -86,4 +86,4 @@ http 429 Too Many Request
 
 12. `BUG:: 429 status에 대해서 pulse controller가 interval을 제대로 늘리지 않는다.`
 
-13. 동작을 통해서 검증되어야하는 기능들은 간단한 test spec용 서버를 구축해서 test되어야함.
+13. `동작을 통해서 검증되어야하는 기능들은 간단한 test spec용 서버를 구축해서 test되어야함.`
