@@ -9,15 +9,40 @@ const { makePulseController } = require("./pulse_controller.js");
 const { makeFormatWriter } = require("./format_writer.js");
 const { makeRequest } = require("./request.js");
 
-const PWD_PATH = path.resolve(__dirname) + "/";
-const DATA_STORAGE_ROOT_PATH = `${PWD_PATH}../data/`;
-const LOG_STORAGE_ROOT_PATH = `${PWD_PATH}../log/`;
+const processCommandLineOption = (optionArray, cb, ...rest) => {
+	let boolRet = false;
+	process.argv.forEach((val, index) => {
+		if(optionArray.indexOf(val) != -1) {
+			cb.apply(null, rest);
+			boolRet = true;
+		}
+	});
+	return boolRet;
+};
+
+const COMMAND_LINE_OPTIONS = {
+	test: ["--test", "-t"],
+	help: ["--help", "-h"]
+};
+const IS_USER_NEED_SOME_HELP = processCommandLineOption(COMMAND_LINE_OPTIONS.help, () => {
+	console.log("help option inserted! call successfully!");
+	// 'exit' uses code 0 for notify the success
+	process.exit(0);
+});
+const IS_TEST = processCommandLineOption(COMMAND_LINE_OPTIONS.test, () => {
+	console.log("test option inserted! call successfully!");
+});
+const TEST_ENV_DIR_NAME = "korbit_sphere";
+const PWD_PATH = IS_TEST ? `${path.resolve(__dirname)}/../${TEST_ENV_DIR_NAME}/` : `${path.resolve(__dirname)}/../`;
+const DATA_STORAGE_ROOT_PATH = `${PWD_PATH}data/`;
+const LOG_STORAGE_ROOT_PATH = `${PWD_PATH}log/`;
 const DEBUG_LOG_STORAGE_PATH = `${LOG_STORAGE_ROOT_PATH}debug/`;
 const INFO_LOG_STORAGE_PATH = `${LOG_STORAGE_ROOT_PATH}info/`;
 const ERROR_LOG_STORAGE_PATH = `${LOG_STORAGE_ROOT_PATH}error/`;
 
 const SUPPORTED_COINS = ["btc_krw", "etc_krw", "eth_krw", "xrp_krw"];
-const TARGET_COIN = SUPPORTED_COINS.includes(process.argv[2]) ? process.argv[2] : "unknown_coin";
+// exit code 9 - Invalid Argument - Either an unknown option was specified, or an option requiring a value was provided without a value.
+const TARGET_COIN = SUPPORTED_COINS.includes(process.argv[2]) ? process.argv[2] : process.exit(9);
 const DATA_STORAGE_PATH = DATA_STORAGE_ROOT_PATH + TARGET_COIN;
 
 /* start:: initialize winston logger */

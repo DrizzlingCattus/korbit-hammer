@@ -23,10 +23,10 @@ describe("request.js", function() {
 		korbitSpy.server.start(10012, done);
 	});
 	
-	afterAll(function(done) {
+	afterAll(function() {
 		//fs.unlinkSync();
 		// TODO:: check if done method need or not
-		korbitSpy.server.stop(done);
+		korbitSpy.server.stop();
 		// you can pass jasmine 'done' function as a callback, or use returned promise: 
 		// this.httpSpy.server.stop().then(done, done.fail); 
 	});

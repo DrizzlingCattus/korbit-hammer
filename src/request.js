@@ -49,6 +49,7 @@ const makeRequest = (option) => {
 			});
 			
 			response.on("error", (err) => {
+				console.log("response error occur :: " + err.stack);
 				throw err;
 			});
 		});
@@ -62,6 +63,7 @@ const makeRequest = (option) => {
 		});
 
 		request.on("error", (err) => {
+			console.log("request error occur :: " + err.stack);
 			throw err;
 		});
 		

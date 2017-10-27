@@ -2,5 +2,7 @@ data/
 log/
 node_modules/
 research/
+korbit_sphere/
+
 *.log
 tmux*
