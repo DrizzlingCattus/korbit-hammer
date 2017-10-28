@@ -95,6 +95,10 @@ const makeRequest = (option) => {
 			}
 			afterAllCallback = callback;
 			return true;
+		},
+		
+		getAgent: () => {
+			return recreatedOption.agent;
 		}
 	};
 };

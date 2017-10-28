@@ -3,6 +3,7 @@ const path = require("path");
 const winston = require("winston");
 const { combine, timestamp, label, printf } = winston.format;
 
+const { io } = require("./io.js");
 const { balloon } = require("./compress.js");
 const { reloadTime } = require("./time_manager.js");
 const { makePulseController } = require("./pulse_controller.js");
@@ -32,6 +33,7 @@ const IS_USER_NEED_SOME_HELP = processCommandLineOption(COMMAND_LINE_OPTIONS.hel
 const IS_TEST = processCommandLineOption(COMMAND_LINE_OPTIONS.test, () => {
 	console.log("test option inserted! call successfully!");
 });
+
 const TEST_ENV_DIR_NAME = "korbit_sphere";
 const PWD_PATH = IS_TEST ? `${path.resolve(__dirname)}/../${TEST_ENV_DIR_NAME}/` : `${path.resolve(__dirname)}/../`;
 const DATA_STORAGE_ROOT_PATH = `${PWD_PATH}data/`;
@@ -66,16 +68,32 @@ const httpLogger = winston.createLogger({
 		})
 	]
 });
+const appLogger = winston.createLogger({
+	format: combine(
+		label({label: TARGET_COIN}),
+		timestamp(),
+		defaultFormat
+	),
+	transports: [
+		new (winston.transports.File)({
+			level: "debug",
+			filename: DEBUG_LOG_STORAGE_PATH + `app_${TARGET_COIN}.log`
+		}),
+		new (winston.transports.File)({
+			level: "error",
+			filename: ERROR_LOG_STORAGE_PATH + `app_${TARGET_COIN}.log`
+		})
+	]
+})
 /* end:: initialize winston logger */
 
-const compressToFileAsync = (filename = "noname_compressed", data = "") => {
-	balloon(data).deflate().then((result) => {
-		result.toFile(`${DATA_STORAGE_PATH}/${filename}_compressed`);
+const compressToFileAsync = (filename = "noname_compressed") => {
+	io(`${DATA_STORAGE_PATH}/${filename}`).readFile().then((data) => {
+		balloon(data).deflate().then((result) => {
+			result.toFile(`${DATA_STORAGE_PATH}/${filename}_compressed`);
+		});
 	});
 };
-
-// initialize interval pulse controller
-const requestPulseController = makePulseController(SUPPORTED_COINS.length);
 
 const makeTimerUpdater = (updateTime, toDoListCallback) => {
 	let intervalId = null;
@@ -100,16 +118,12 @@ const requestOption = {
 	method: "GET"
 };
 
+const requestPulseController = makePulseController(SUPPORTED_COINS.length);
 const stockWriter = makeFormatWriter(DATA_STORAGE_PATH);
 const stockRequest = makeRequest(requestOption);
 let currTime = null;
 let prevTime = reloadTime();
 let prevState = null;
-// TODO :: need to get agent object for process kill
-// const keepAliveAgent = new https.Agent({
-// 	keepAlive: true
-// });
-// requestOption.agent = keepAliveAgent;
 
 const updateStockRequestInterval = makeTimerUpdater(() => {
 	return requestPulseController.getInterval();
@@ -131,7 +145,9 @@ stockRequest.afterAll((response) => {
 // 200 - OK
 stockRequest.bind(200, (response, stockData) => {
 	if(currTime.isDayPass(prevTime)) {
-		compressToFileAsync(prevTime.getDate(), stockWriter.popDailyData());
+		// TODO :: stockWriter's dailyData no more need.. refactor this.
+		stockWriter.popDailyData();
+		compressToFileAsync(prevTime.getDate());
 	}
 	stockWriter.setFormat((data) => {
 		return `${currTime.getCurrent()} ${data}\n`;
@@ -161,14 +177,32 @@ stockRequest.bind(403, (response, chunck) => {
 // run stock crawler
 updateStockRequestInterval();
 
-process.on("uncaughtException", function (err) {
+// gracefully stop for PM2's stop or restart
+process.on("SIGINT", () => {
+	console.log("SIGINT:: PM2 restart or stop process");
+	appLogger.debug("SIGINT:: PM2 restart or stop process");
+	
+	stockRequest.getAgent().destory();
+});
+
+// process.on("SIGKILL", () => {
+// 	console.log("SIGKILL:: PM2 restart or stop process");
+// 	appLogger.debug("SIGKILL:: PM2 restart or stop process");
+	
+// 	stockRequest.getAgent().destory();
+// });
+
+process.on("uncaughtException", (err) => {
 	console.error("process uncaughtException error occur!");
-	httpLogger.error(err.stack);
+	appLogger.error(err.stack);
+	
+	stockRequest.getAgent().destory();
 });
 
 process.on("exit", (code) => {
+	console.log("exit code is " + code);
+	
 	// if agent is keepAlive, then sockets may hang open for quite a long time 
 	// before the server terminates them.
-	// keepAliveAgent.destory();
-	console.log("exit code is " + code);
+	stockRequest.getAgent().destory();
 });

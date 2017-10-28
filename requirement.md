@@ -14,8 +14,8 @@
 
 5. 파일을 stream을 통해 쓸 수 있다.(stream객체를 넘겨서)
 
-6. 파일 저장할때 너무 많은 요청이 들어올시, node and Error: EMFILE, too many open files 오류가 일어날 수 있음.
-graceful-fs 라이브러리를 참고하여 io.js 개선
+6. `파일 저장할때 너무 많은 요청이 들어올시, node and Error: EMFILE, too many open files 오류가 일어날 수 있음.
+graceful-fs 라이브러리를 참고하여 io.js 개선`
 
 ## 압축(compress.js)
 
