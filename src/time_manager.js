@@ -1,4 +1,4 @@
-const reloadTime = function(option = {}) {
+const reloadTime = (option = {}) => {
 	const current = option.staticDate || new Date();
 	const timeZone = option.timeZone || "Asia/Seoul";
 	const outputApi = {};
@@ -23,4 +23,4 @@ const reloadTime = function(option = {}) {
 	return outputApi;
 };
 
-module.exports = {reloadTime};
+module.exports = { reloadTime };

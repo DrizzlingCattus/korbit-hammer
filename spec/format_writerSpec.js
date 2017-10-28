@@ -41,13 +41,4 @@ describe("format_writer.js", function() {
 			done();
 		});
 	});
-	
-	it("should be able to pop & clean daily data", function(done) {
-		var endWriting = writer.writeWithFormatAsync(tobeSavedFile, tobeSavedData);
-		endWriting.then(function(result) {
-			expect(writer.popDailyData()).toBe(result);
-			expect(writer.popDailyData()).toBe("");
-			done();
-		});
-	});
 });

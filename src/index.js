@@ -11,14 +11,14 @@ const { makeFormatWriter } = require("./format_writer.js");
 const { makeRequest } = require("./request.js");
 
 const processCommandLineOption = (optionArray, cb, ...rest) => {
-	let boolRet = false;
+	let isCommandInserted = false;
 	process.argv.forEach((val, index) => {
 		if(optionArray.indexOf(val) != -1) {
 			cb.apply(null, rest);
-			boolRet = true;
+			isCommandInserted = true;
 		}
 	});
-	return boolRet;
+	return isCommandInserted;
 };
 
 const COMMAND_LINE_OPTIONS = {
@@ -145,8 +145,6 @@ stockRequest.afterAll((response) => {
 // 200 - OK
 stockRequest.bind(200, (response, stockData) => {
 	if(currTime.isDayPass(prevTime)) {
-		// TODO :: stockWriter's dailyData no more need.. refactor this.
-		stockWriter.popDailyData();
 		compressToFileAsync(prevTime.getDate());
 	}
 	stockWriter.setFormat((data) => {
@@ -182,9 +180,10 @@ process.on("SIGINT", () => {
 	console.log("SIGINT:: PM2 restart or stop process");
 	appLogger.debug("SIGINT:: PM2 restart or stop process");
 	
-	stockRequest.getAgent().destory();
+	//stockRequest.getAgent().destory();
 });
 
+// https://github.com/nodejs/node-v0.x-archive/issues/6339
 // process.on("SIGKILL", () => {
 // 	console.log("SIGKILL:: PM2 restart or stop process");
 // 	appLogger.debug("SIGKILL:: PM2 restart or stop process");
@@ -196,7 +195,7 @@ process.on("uncaughtException", (err) => {
 	console.error("process uncaughtException error occur!");
 	appLogger.error(err.stack);
 	
-	stockRequest.getAgent().destory();
+	//stockRequest.getAgent().destory();
 });
 
 process.on("exit", (code) => {
@@ -204,5 +203,5 @@ process.on("exit", (code) => {
 	
 	// if agent is keepAlive, then sockets may hang open for quite a long time 
 	// before the server terminates them.
-	stockRequest.getAgent().destory();
+	//stockRequest.getAgent().destory();
 });

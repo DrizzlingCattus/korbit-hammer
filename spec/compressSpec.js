@@ -18,11 +18,13 @@ function compressBeforeEach(data) {
 }
 
 describe("compress.js", function() {
-	var plainData,
-		plainFile,
-		zipFile;
+	var cwd,
+			plainData,
+			plainFile,
+			zipFile;
 	
 	beforeEach(function() {
+		cwd = process.cwd() + "/";
 		plainData = "Dream is my reality and the only kinds of real fantasy.";
 		plainFile = "compress_input.txt";
 		zipFile = "compress_input.gz";
@@ -38,7 +40,7 @@ describe("compress.js", function() {
 	it("should be able to save the result in a single file", function(done) {
 		compressBeforeEach(plainData).then(function(result) {
 			result.toFile(plainFile, {}, function(data) {
-				fs.unlinkSync(balloon.constant.CALLER_PWD + plainFile);
+				fs.unlinkSync(cwd + plainFile);
 				done();
 			});
 		});
@@ -47,7 +49,7 @@ describe("compress.js", function() {
 	it("should be able to append the result in a single file", function(done) {
 		compressBeforeEach(plainData).then(function(result) {
 			result.toAppendFile(plainFile, {}, function(data) {
-				fs.unlinkSync(balloon.constant.CALLER_PWD + plainFile);
+				fs.unlinkSync(cwd + plainFile);
 				done();
 			});
 		});
@@ -55,7 +57,7 @@ describe("compress.js", function() {
 	
 	it("should be able to tell path from the file name", function(done) {
 		// should be check file name
-		var plainPath = balloon.constant.CALLER_PWD + plainFile;
+		var plainPath = cwd + plainFile;
 		compressBeforeEach(plainData).then(function(result) {
 			result.toFile(plainFile, {}, function(data) {
 				fs.access(plainPath, function(err) {

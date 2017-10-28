@@ -64,4 +64,4 @@ const io = (path) => {
 };
 
 
-module.exports = {io};
+module.exports = { io };

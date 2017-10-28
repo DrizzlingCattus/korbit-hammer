@@ -6,8 +6,6 @@ const Promise = require("bluebird");
 
 const { io } = require("./io.js");
 
-const CALLER_PWD = process.cwd() + "/";
-
 const isFileName = (str) => {
 	// accept only word or .
 	return /^(\w).+/.test(str);
@@ -26,7 +24,7 @@ const outputApiWrapper = (buffer, innerOption = {}) => {
 		return getData({encoding: encoding});
 	};
 	
-	outputApi.toAppendFile = (path, option = {}, callback) => {
+	outputApi.toAppendFile = (path, option = {}, callback = null) => {
 		const data = getData(option);
 		const currentPath = path || "";
 		
@@ -35,7 +33,7 @@ const outputApiWrapper = (buffer, innerOption = {}) => {
 		});
 	};
 	
-	outputApi.toFile = (path, option = {}, callback) => {
+	outputApi.toFile = (path, option = {}, callback = null) => {
 		const data = getData(option);
 		const currentPath = path || "";
 		
@@ -92,8 +90,4 @@ const balloon = (data) => {
 	};
 };
 
-balloon.constant = {
-	CALLER_PWD: CALLER_PWD
-};
-
-module.exports = {balloon};
+module.exports = { balloon };
