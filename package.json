@@ -14,7 +14,7 @@
     "winston": "^3.0.0-rc0"
   },
   "devDependencies": {
-    "eslint": "^4.6.1",
+    "eslint": "^4.18.2",
     "eslint-config-google": "^0.9.1",
     "graceful-fs": "^4.1.11",
     "jasmine-http-server-spy": "^0.3.1"
